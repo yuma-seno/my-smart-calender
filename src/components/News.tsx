@@ -134,37 +134,29 @@ const News = ({ rssUrl }: NewsProps) => {
                   }')`,
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-black/50" />
 
-              <div className="absolute inset-0 p-[15px] flex flex-col justify-start w-full">
-                <div className="inline-block text-white/70 text-[11px]  pb-0.5 text-right w-full">
-                  {article.source}
-                </div>
-
-                <h2 className="max-w-full text-white text-[24px] leading-tight mt-[5px] line-clamp-2 break-words">
+              <div className="absolute inset-0 px-[21px] py-[15px] justify-start w-full flex flex-col">
+                <h2 className="flex-none max-w-full text-white text-[24px] leading-tight mt-[9px] mb-[5px] line-clamp-2 break-words">
                   {article.title}
                 </h2>
 
-                <div className="absolute bottom-[36px] left-[26px] right-[26px] flex items-end justify-between gap-[20px]">
-                  <div className="flex-1 min-w-0 max-w-full">
-                    {article.description && (
-                      <p className="text-gray-300 text-[14px] leading-relaxed line-clamp-3 mb-[9px] break-words">
-                        {article.description}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between text-gray-400 text-[13px]">
-                      <span>{article.pubDate || ""}</span>
-                    </div>
-                  </div>
-                  <div className="flex-none bg-white p-[5px] rounded-[4px]">
+                <p className="flex-1 text-gray-300 text-[16px] leading-relaxed break-words line-clamp-4">
+                  <span className="float-right w-[0px] h-[28px] t-0"></span>
+                  <span className="flex-none bg-white p-[3px] rounded-[4px] float-right ml-2 clear-right">
                     <img
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
                         article.link ?? "https://example.com"
                       )}`}
                       alt="記事URLのQRコード"
-                      className="w-[65px] h-[65px] object-contain"
+                      className="w-[68px] h-[68px] object-contain clear-right"
                     />
-                  </div>
+                  </span>
+                  {article.description}
+                </p>
+                <div className="flex-none flex items-center justify-between text-gray-400 text-[13px] mb-[10px] pt-[6px] border-t-2 border-white/50">
+                  <span>{article.source}</span>
+                  <span>{article.pubDate || ""}</span>
                 </div>
               </div>
             </Card>
