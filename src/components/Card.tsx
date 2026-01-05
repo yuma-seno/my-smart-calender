@@ -4,9 +4,10 @@ interface CardProps {
   children: any;
   className?: string;
   theme?: string;
+  onClick?: () => void;
 }
 
-const Card = ({ children, className = "", theme }: CardProps) => (
+const Card = ({ children, className = "", theme, onClick }: CardProps) => (
   <div
     className={`
     rounded-3xl h-full flex flex-col overflow-hidden relative
@@ -15,6 +16,7 @@ const Card = ({ children, className = "", theme }: CardProps) => (
     dark:bg-neutral-700/30 dark:border-white/10 dark:backdrop-blur-md
     ${className}
   `}
+    onClick={onClick}
   >
     {children}
   </div>
