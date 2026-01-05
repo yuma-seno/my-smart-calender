@@ -1,0 +1,4 @@
+# dist ディレクトリにリダイレクト
+
+RewriteEngine On
+RewriteRule ^$ /dist/ [L]
