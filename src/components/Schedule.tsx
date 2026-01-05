@@ -32,13 +32,10 @@ const Schedule = ({ events, selectedDate }: ScheduleProps) => {
           daysEvents.map((ev: any, i: number) => (
             <div
               key={i}
-              className="bg-black/5 dark:bg-white/5 p-2 rounded-lg border-l-4 shrink-0 hidden-scrollbar"
+              className="bg-black/5 dark:bg-white/5 p-2 rounded-lg border-l-4 shrink-0"
               style={{ borderLeftColor: ev.calendarColor || "#60a5fa" }}
             >
-              <div
-                className="text-[18px] font-mono mb-0.5"
-                style={{ color: ev.calendarColor || "#60a5fa" }}
-              >
+              <div className="text-[16px] text-gray-500 dark:text-gray-200">
                 {ev.isAllDay || !ev.timeStr
                   ? "終日"
                   : ev.endTimeStr

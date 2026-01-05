@@ -237,11 +237,13 @@ const App = () => {
 
         {/* Right Column */}
         <div className="flex flex-col gap-4 h-full pt-10">
-          <div className="flex-none h-[23%]">
+          <div className="flex-none h-[180px]">
             <Weather city={config.city} />
           </div>
-          <div className="flex-1 min-h-0">
-            <Schedule events={events} selectedDate={selectedDate} />
+          <div className="flex-1 min-h-0 relative">
+            <div className="absolute inset-0">
+              <Schedule events={events} selectedDate={selectedDate} />
+            </div>
           </div>
           <div className="flex-none h-[250px]">
             <News rssUrl={config.rssUrl} />
