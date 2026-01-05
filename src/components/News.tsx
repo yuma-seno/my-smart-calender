@@ -19,6 +19,8 @@ interface NewsItem {
   imageUrl?: string;
 }
 
+const MAX_NEWS_ITEMS = 20;
+
 const News = ({ rssUrl, resetToken }: NewsProps) => {
   const [news, setNews] = useState([] as NewsItem[]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -26,15 +28,23 @@ const News = ({ rssUrl, resetToken }: NewsProps) => {
   const swiperRef = useRef(null as any);
 
   useEffect(() => {
-    if (!rssUrl) return;
+    if (!rssUrl) {
+      setNews([]);
+      setError(null);
+      return;
+    }
+
     const fetchNews = async () => {
       setError(null);
       try {
         const xmlString = await fetchWithProxy(rssUrl);
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(xmlString, "text/xml");
-        const items = Array.from(xmlDoc.querySelectorAll("item"));
-        if (!items.length) throw new Error("No items");
+        const allItems = Array.from(xmlDoc.querySelectorAll("item"));
+        if (!allItems.length) throw new Error("No items");
+
+        // メモリ使用量と描画コストを抑えるため、保持する記事数に上限を設ける
+        const items = allItems.slice(0, MAX_NEWS_ITEMS);
 
         const channelTitle =
           xmlDoc.querySelector("channel > title")?.textContent || "NEWS";
@@ -87,22 +97,21 @@ const News = ({ rssUrl, resetToken }: NewsProps) => {
         );
 
         // 記事内容が変わらない場合は再レンダーを抑制
-        const unchanged =
-          news.length === newsWithOg.length &&
-          news.every((prev, idx) => {
-            const curr = newsWithOg[idx];
-            return (
-              prev.title === curr.title &&
-              prev.description === curr.description &&
-              prev.pubDate === curr.pubDate &&
-              prev.link === curr.link &&
-              prev.imageUrl === curr.imageUrl
-            );
-          });
-
-        if (!unchanged) {
-          setNews(newsWithOg);
-        }
+        setNews((prev) => {
+          const unchanged =
+            prev.length === newsWithOg.length &&
+            prev.every((p, idx) => {
+              const curr = newsWithOg[idx];
+              return (
+                p.title === curr.title &&
+                p.description === curr.description &&
+                p.pubDate === curr.pubDate &&
+                p.link === curr.link &&
+                p.imageUrl === curr.imageUrl
+              );
+            });
+          return unchanged ? prev : newsWithOg;
+        });
         window.setTimeout(() => {
           if (!swiperRef.current) return;
           setCurrentIndex(

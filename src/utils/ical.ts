@@ -112,8 +112,8 @@ export const parseICal = (icalData: string): CalendarEventMap => {
   // 無限ループ回避用の上限
   const now = new Date();
   const limitDate = new Date(
-    now.getFullYear() + 2,
-    now.getMonth(),
+    now.getFullYear(),
+    now.getMonth() + 13,
     now.getDate()
   );
   const maxOccurrences = 2000;

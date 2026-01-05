@@ -22,7 +22,12 @@ const Weather = ({ city, resetToken, dateChangeToken }: WeatherProps) => {
   const scrollRef = React.useRef(null as any);
 
   useEffect(() => {
-    if (!city) return;
+    if (!city) {
+      setForecast([]);
+      setLocationName("");
+      return;
+    }
+
     const fetchWeather = async () => {
       setLoading(true);
       try {
@@ -49,21 +54,20 @@ const Weather = ({ city, resetToken, dateChangeToken }: WeatherProps) => {
         );
 
         // 値が変わらない場合は state 更新をスキップして再レンダーを抑制
-        const unchanged =
-          forecast.length === nextForecast.length &&
-          forecast.every((prev, idx) => {
-            const curr = nextForecast[idx];
-            return (
-              prev.date.getTime() === curr.date.getTime() &&
-              prev.code === curr.code &&
-              prev.maxTemp === curr.maxTemp &&
-              prev.minTemp === curr.minTemp
-            );
-          });
-
-        if (!unchanged) {
-          setForecast(nextForecast);
-        }
+        setForecast((prev) => {
+          const unchanged =
+            prev.length === nextForecast.length &&
+            prev.every((p, idx) => {
+              const curr = nextForecast[idx];
+              return (
+                p.date.getTime() === curr.date.getTime() &&
+                p.code === curr.code &&
+                p.maxTemp === curr.maxTemp &&
+                p.minTemp === curr.minTemp
+              );
+            });
+          return unchanged ? prev : nextForecast;
+        });
       } catch (err) {
         console.error(err);
       } finally {
@@ -75,7 +79,7 @@ const Weather = ({ city, resetToken, dateChangeToken }: WeatherProps) => {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [city, dateChangeToken, forecast]);
+  }, [city, dateChangeToken]);
 
   useEffect(() => {
     if (scrollRef.current) {
