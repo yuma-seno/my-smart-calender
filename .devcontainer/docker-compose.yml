@@ -1,0 +1,15 @@
+services:
+  react_app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      args:
+        CONTAINER_USER: vscode
+        CONTAINER_WORKDIR: /workspace
+    volumes:
+      - ..:/workspace
+    ports:
+      - "3000:3000"
+      - "5173:5173"
+    tty: true
+    stdin_open: true

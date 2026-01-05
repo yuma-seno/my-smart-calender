@@ -1,0 +1,20 @@
+/* 旧: @tailwind base; などの3行は削除 */
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+.swiper-slide {
+  display: flex !important;
+  flex-direction: column;
+  height: 100%;
+}
+
+@layer utilities {
+  .hidden-scrollbar {
+    -ms-overflow-style: none; /* IE, Edge 対応 */
+    scrollbar-width: none; /* Firefox 対応 */
+  }
+  .hidden-scrollbar::-webkit-scrollbar {
+    /* Chrome, Safari 対応 */
+    display: none;
+  }
+}
