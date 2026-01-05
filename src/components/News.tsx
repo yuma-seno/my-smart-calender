@@ -22,7 +22,6 @@ const News = ({ rssUrl }: NewsProps) => {
   const [news, setNews] = useState([] as NewsItem[]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState(null as string | null);
-  const [activeArticle, setActiveArticle] = useState(null as NewsItem | null);
   const swiperRef = useRef(null as any);
 
   useEffect(() => {
@@ -101,11 +100,6 @@ const News = ({ rssUrl }: NewsProps) => {
 
   const handleNext = () => swiperRef.current?.slideNext();
   const handlePrev = () => swiperRef.current?.slidePrev();
-  const handleOpenDetail = (article: NewsItem) => {
-    if (!article.link) return;
-    setActiveArticle(article);
-  };
-  const handleCloseDetail = () => setActiveArticle(null);
 
   if (error || !news.length)
     return (
@@ -131,10 +125,7 @@ const News = ({ rssUrl }: NewsProps) => {
       >
         {news.map((article: NewsItem, index: number) => (
           <SwiperSlide key={index} className="w-full h-full">
-            <Card
-              className="w-full h-full relative cursor-pointer"
-              onClick={() => handleOpenDetail(article)}
-            >
+            <Card className="w-full h-full relative">
               <div
                 className="absolute inset-0 bg-cover bg-center"
                 style={{
@@ -150,7 +141,7 @@ const News = ({ rssUrl }: NewsProps) => {
                   {article.source}
                 </div>
 
-                <h2 className="max-w-full text-white text-[26px] leading-tight mt-[5px] line-clamp-2 break-words">
+                <h2 className="max-w-full text-white text-[24px] leading-tight mt-[5px] line-clamp-2 break-words">
                   {article.title}
                 </h2>
 
@@ -211,37 +202,8 @@ const News = ({ rssUrl }: NewsProps) => {
         ))}
       </div>
 
-      {activeArticle && activeArticle.link && (
-        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-neutral-700 w-full h-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800">
-              <div className="flex flex-col min-w-0 mr-4">
-                <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {activeArticle.source}
-                </span>
-                <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
-                  {activeArticle.title}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleCloseDetail}
-                className="text-xs px-3 py-1 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-700 dark:text-gray-100"
-              >
-                閉じる
-              </button>
-            </div>
-            <div className="flex-1">
-              <iframe
-                key={activeArticle.link}
-                src={activeArticle.link}
-                title={activeArticle.title}
-                className="w-full h-full border-0"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* クリック時の詳細ダイアログ処理は廃止し、
+          詳細参照は QR コードからのみ行う。 */}
     </Card>
   );
 };

@@ -223,7 +223,7 @@ const App = () => {
       </div>
 
       {/* Main Grid */}
-      <div className="w-full h-full grid grid-cols-[75%_24%] p-[1%] gap-[1%]">
+      <div className="w-full h-full grid grid-cols-[72%_27%] p-[1%] gap-[1%]">
         {/* Left Column */}
         <div className="flex flex-col gap-4 h-full">
           <div className="flex-1 min-h-0">
