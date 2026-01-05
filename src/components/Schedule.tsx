@@ -1,16 +1,14 @@
 import React from "react";
 import Card from "./Card";
+import type { CalendarEventMap, CalendarEvent } from "../types/events";
 
 interface ScheduleProps {
-  events: Record<string, any[]>;
+  events: CalendarEventMap;
   selectedDate: Date | null;
+  today: Date;
 }
 
-const Schedule = ({
-  events,
-  selectedDate,
-  today,
-}: ScheduleProps & { today: Date }) => {
+const Schedule = ({ events, selectedDate, today }: ScheduleProps) => {
   const displayDate = selectedDate || today;
   const isToday = new Date().toDateString() === displayDate.toDateString();
   const y = displayDate.getFullYear();
@@ -33,7 +31,7 @@ const Schedule = ({
             予定はありません
           </div>
         ) : (
-          daysEvents.map((ev: any, i: number) => (
+          daysEvents.map((ev: CalendarEvent, i: number) => (
             <div
               key={i}
               className="bg-black/5 dark:bg-white/5 p-2 rounded-lg border-l-4 shrink-0"

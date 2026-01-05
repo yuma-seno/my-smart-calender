@@ -1,6 +1,4 @@
-/* 旧: @tailwind base; などの3行は削除 */
 @import "tailwindcss";
-@config "../tailwind.config.ts";
 
 html {
   font-family: "M PLUS 1p", system-ui, -apple-system, BlinkMacSystemFont,

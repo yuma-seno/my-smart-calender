@@ -1,14 +1,15 @@
 import ICAL from "ical.js";
+import type { CalendarEventBase, CalendarEventMap } from "../types/events";
 
-const formatDateKey = (date: Date) => {
+const formatDateKey = (date: Date): string => {
   const y = date.getFullYear();
   const m = date.getMonth() + 1;
   const d = date.getDate();
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 };
 
-export const parseICal = (icalData: string) => {
-  const events: Record<string, any[]> = {};
+export const parseICal = (icalData: string): CalendarEventMap => {
+  const events: CalendarEventMap = {};
 
   const jcalData = ICAL.parse(icalData);
   const comp = new ICAL.Component(jcalData);
@@ -92,7 +93,7 @@ export const parseICal = (icalData: string) => {
     while (loopDate <= endForKey && guard < 31) {
       const dateKey = formatDateKey(loopDate);
       if (!events[dateKey]) events[dateKey] = [];
-      events[dateKey].push({
+      const baseEvent: CalendarEventBase = {
         summary,
         start: startKey,
         end: endKey,
@@ -101,7 +102,8 @@ export const parseICal = (icalData: string) => {
         isAllDay,
         isStart: formatDateKey(loopDate) === startKey,
         isEnd: formatDateKey(loopDate) === endKey,
-      });
+      };
+      events[dateKey].push(baseEvent);
       loopDate.setDate(loopDate.getDate() + 1);
       guard++;
     }

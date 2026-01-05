@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 import { SmartDashConfig, CalendarConfig } from "../types/config";
+import { HOLIDAY_ICAL_URL } from "../utils/config";
 
 interface SettingsModalProps {
   config: SmartDashConfig;
@@ -16,9 +17,6 @@ interface SettingsForm {
 }
 
 const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
-  const HOLIDAY_ICAL_URL =
-    "https://calendar.google.com/calendar/ical/ja.japanese%23holiday%40group.v.calendar.google.com/public/basic.ics";
-
   const [formData, setFormData] = useState({
     city: config.city,
     rssUrl: config.rssUrl,

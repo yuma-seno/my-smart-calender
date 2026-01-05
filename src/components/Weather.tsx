@@ -39,14 +39,31 @@ const Weather = ({ city, resetToken, dateChangeToken }: WeatherProps) => {
           `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=16`
         );
         const wData = await wRes.json();
-        setForecast(
-          wData.daily.time.map((t: string, i: number) => ({
+        const nextForecast: ForecastItem[] = wData.daily.time.map(
+          (t: string, i: number) => ({
             date: new Date(t),
             code: wData.daily.weathercode[i] as number,
             maxTemp: Math.round(wData.daily.temperature_2m_max[i] as number),
             minTemp: Math.round(wData.daily.temperature_2m_min[i] as number),
-          }))
+          })
         );
+
+        // 値が変わらない場合は state 更新をスキップして再レンダーを抑制
+        const unchanged =
+          forecast.length === nextForecast.length &&
+          forecast.every((prev, idx) => {
+            const curr = nextForecast[idx];
+            return (
+              prev.date.getTime() === curr.date.getTime() &&
+              prev.code === curr.code &&
+              prev.maxTemp === curr.maxTemp &&
+              prev.minTemp === curr.minTemp
+            );
+          });
+
+        if (!unchanged) {
+          setForecast(nextForecast);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -58,7 +75,7 @@ const Weather = ({ city, resetToken, dateChangeToken }: WeatherProps) => {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [city, dateChangeToken]);
+  }, [city, dateChangeToken, forecast]);
 
   useEffect(() => {
     if (scrollRef.current) {

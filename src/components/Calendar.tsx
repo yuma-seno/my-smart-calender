@@ -1,11 +1,19 @@
-import React, { useMemo, useRef, useEffect, useState } from "react";
+import React, {
+  useMemo,
+  useRef,
+  useEffect,
+  useState,
+  ReactElement,
+} from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Card from "./Card";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 
+import type { CalendarEventMap, CalendarEvent } from "../types/events";
+
 interface CalendarProps {
-  events: Record<string, any[]>;
+  events: CalendarEventMap;
   onSelectDate: (date: Date | null) => void;
   selectedDate: Date | null;
   today: Date;
@@ -23,8 +31,8 @@ const Calendar = ({
     () => new Date(today.getFullYear(), today.getMonth(), 1),
     [today]
   );
-  const swiperRef = useRef(null as any);
-  const yearSwiperRef = useRef(null as any);
+  const swiperRef = useRef<any | null>(null);
+  const yearSwiperRef = useRef<any | null>(null);
   const [monthModalOpen, setMonthModalOpen] = useState(false as boolean);
   const [currentYear, setCurrentYear] = useState(baseDate.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(baseDate.getMonth() + 1);
@@ -54,7 +62,7 @@ const Calendar = ({
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const startDay = new Date(year, month, 1).getDay();
     const totalSlots = 42;
-    const days: any[] = [];
+    const days: ReactElement[] = [];
     let cellIndex = 0;
 
     for (let i = 0; i < startDay; i++) {
@@ -89,7 +97,9 @@ const Calendar = ({
         "0"
       )}`;
       const dayEvents = events[dateKey] || [];
-      const hasHolidayEvent = dayEvents.some((ev: any) => ev.isHoliday);
+      const hasHolidayEvent = dayEvents.some(
+        (ev: CalendarEvent) => ev.isHoliday
+      );
       const isHoliday = dayOfWeek === 0 || hasHolidayEvent;
 
       let numClass = "text-gray-700 dark:text-gray-200";
@@ -127,8 +137,8 @@ const Calendar = ({
           </span>
           <div className="w-full h-full flex flex-col gap-x-0.5 gap-y-0.5 z-10">
             {dayEvents
-              .slice(0, dayEvents.length == 3 ? 3 : 2)
-              .map((ev: any, i: number) => (
+              .slice(0, dayEvents.length === 3 ? 3 : 2)
+              .map((ev: CalendarEvent, i: number) => (
                 <div
                   key={i}
                   className={`
@@ -188,7 +198,7 @@ const Calendar = ({
     setCurrentYear(by);
     setCurrentMonth(bm);
     // reset pickerYear but clamp into allowed range
-    setPickerYear((prev) => {
+    setPickerYear((prev: number) => {
       if (prev < minYear || prev > maxYear) return by;
       return prev;
     });
@@ -212,7 +222,7 @@ const Calendar = ({
             1
           );
           const { year, month, days } = buildMonthGrid(monthDate);
-          const rows: any[][] = [];
+          const rows: ReactElement[][] = [];
           for (let r = 0; r < 6; r++) {
             rows.push(days.slice(r * 7, (r + 1) * 7));
           }

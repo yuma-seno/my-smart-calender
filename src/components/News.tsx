@@ -86,7 +86,23 @@ const News = ({ rssUrl, resetToken }: NewsProps) => {
           })
         );
 
-        setNews(newsWithOg);
+        // 記事内容が変わらない場合は再レンダーを抑制
+        const unchanged =
+          news.length === newsWithOg.length &&
+          news.every((prev, idx) => {
+            const curr = newsWithOg[idx];
+            return (
+              prev.title === curr.title &&
+              prev.description === curr.description &&
+              prev.pubDate === curr.pubDate &&
+              prev.link === curr.link &&
+              prev.imageUrl === curr.imageUrl
+            );
+          });
+
+        if (!unchanged) {
+          setNews(newsWithOg);
+        }
         window.setTimeout(() => {
           if (!swiperRef.current) return;
           setCurrentIndex(
