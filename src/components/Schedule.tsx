@@ -6,8 +6,12 @@ interface ScheduleProps {
   selectedDate: Date | null;
 }
 
-const Schedule = ({ events, selectedDate }: ScheduleProps) => {
-  const displayDate = selectedDate || new Date();
+const Schedule = ({
+  events,
+  selectedDate,
+  today,
+}: ScheduleProps & { today: Date }) => {
+  const displayDate = selectedDate || today;
   const isToday = new Date().toDateString() === displayDate.toDateString();
   const y = displayDate.getFullYear();
   const m = displayDate.getMonth() + 1;

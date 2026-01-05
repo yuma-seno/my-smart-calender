@@ -112,11 +112,21 @@ const getInitialTheme = (): string => {
 
 const App = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [now, setNow] = useState(new Date() as Date);
   const [theme, setTheme] = useState(getInitialTheme() as string);
   const [config, setConfig] = useState(getInitialConfig() as SmartDashConfig);
   const [selectedDate, setSelectedDate] = useState(null as Date | null);
   const [events, setEvents] = useState({} as Record<string, any[]>);
   const selectionTimerRef = useRef(null as number | null);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setNow(new Date() as Date);
+    }, 60 * 1000);
+    return () => {
+      window.clearInterval(id);
+    };
+  }, []);
 
   useEffect(() => {
     const calendars = (config.calendars || []).filter(
@@ -230,6 +240,7 @@ const App = () => {
             <Calendar
               events={events}
               selectedDate={selectedDate}
+              today={now}
               onSelectDate={setSelectedDate}
             />
           </div>
@@ -242,7 +253,11 @@ const App = () => {
           </div>
           <div className="flex-1 min-h-0 relative">
             <div className="absolute inset-0">
-              <Schedule events={events} selectedDate={selectedDate} />
+              <Schedule
+                events={events}
+                selectedDate={selectedDate}
+                today={now}
+              />
             </div>
           </div>
           <div className="flex-none h-[250px]">

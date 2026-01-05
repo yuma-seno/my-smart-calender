@@ -8,10 +8,19 @@ interface CalendarProps {
   events: Record<string, any[]>;
   onSelectDate: (date: Date | null) => void;
   selectedDate: Date | null;
+  today: Date;
 }
 
-const Calendar = ({ events, onSelectDate, selectedDate }: CalendarProps) => {
-  const baseDate = useMemo(() => new Date(), []);
+const Calendar = ({
+  events,
+  onSelectDate,
+  selectedDate,
+  today,
+}: CalendarProps) => {
+  const baseDate = useMemo(
+    () => new Date(today.getFullYear(), today.getMonth(), 1),
+    [today]
+  );
   const swiperRef = useRef(null as any);
 
   const handleChangeMonthYear = (year: number, month1to12: number) => {
@@ -59,7 +68,7 @@ const Calendar = ({ events, onSelectDate, selectedDate }: CalendarProps) => {
     for (let d = 1; d <= daysInMonth; d++) {
       const dateObj = new Date(year, month, d);
       const dayOfWeek = dateObj.getDay();
-      const isToday = new Date().toDateString() === dateObj.toDateString();
+      const isToday = today.toDateString() === dateObj.toDateString();
       const isSelected =
         selectedDate && selectedDate.toDateString() === dateObj.toDateString();
       const y = dateObj.getFullYear();

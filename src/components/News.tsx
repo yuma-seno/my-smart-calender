@@ -86,13 +86,19 @@ const News = ({ rssUrl }: NewsProps) => {
         );
 
         setNews(newsWithOg);
-        setCurrentIndex(0);
+        window.setTimeout(
+          () =>
+            setCurrentIndex(
+              swiperRef.current?.realIndex ?? swiperRef.current?.activeIndex
+            ),
+          100
+        );
       } catch (err) {
         setError("News Error");
       }
     };
     fetchNews();
-    const intervalId = window.setInterval(fetchNews, 5 * 60 * 1000);
+    const intervalId = window.setInterval(fetchNews, 10 * 1000);
     return () => {
       window.clearInterval(intervalId);
     };
