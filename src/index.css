@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
 
 html {
   font-family: "M PLUS 1p", system-ui, -apple-system, BlinkMacSystemFont,

@@ -205,7 +205,7 @@ const Calendar = ({
   }, [baseDate, minYear, maxYear]);
 
   return (
-    <Card className="select-none flex p-0 flex-col h-full !p-4">
+    <Card className="select-none flex p-0 flex-col h-full">
       <Swiper
         className="flex-1 w-full min-h-0"
         slidesPerView={1}
@@ -238,9 +238,9 @@ const Calendar = ({
                       setPickerYear(year);
                       setMonthModalOpen(true);
                     }}
-                    className="bg-transparent text-[30px] font-bold focus:outline-none cursor-pointer hidden-appearance"
+                    className="bg-transparent text-[30px] font-bold focus:outline-none cursor-pointer hidden-appearance my-1.5"
                   >
-                    {year}年{month + 1}月
+                    {year}年 {month + 1}月
                   </button>
                 </div>
                 <div className="flex-none flex gap-1">
