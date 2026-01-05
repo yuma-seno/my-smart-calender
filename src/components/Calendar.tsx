@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Card from "./Card";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -9,6 +9,7 @@ interface CalendarProps {
   onSelectDate: (date: Date | null) => void;
   selectedDate: Date | null;
   today: Date;
+  resetToken: number;
 }
 
 const Calendar = ({
@@ -16,12 +17,21 @@ const Calendar = ({
   onSelectDate,
   selectedDate,
   today,
+  resetToken,
 }: CalendarProps) => {
   const baseDate = useMemo(
     () => new Date(today.getFullYear(), today.getMonth(), 1),
     [today]
   );
   const swiperRef = useRef(null as any);
+  const yearSwiperRef = useRef(null as any);
+  const [monthModalOpen, setMonthModalOpen] = useState(false as boolean);
+  const [currentYear, setCurrentYear] = useState(baseDate.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(baseDate.getMonth() + 1);
+  const [pickerYear, setPickerYear] = useState(baseDate.getFullYear());
+
+  const minYear = baseDate.getFullYear() - 1;
+  const maxYear = baseDate.getFullYear() + 1;
 
   const handleChangeMonthYear = (year: number, month1to12: number) => {
     const target = new Date(year, month1to12 - 1, 1);
@@ -111,7 +121,7 @@ const Calendar = ({
         `}
         >
           <span
-            className={`text-[18px] font-bold z-10 mb-0.5 text-center ${numClass}`}
+            className={`text-[20px] font-bold z-10 mb-0.5 text-center ${numClass}`}
           >
             {d}
           </span>
@@ -134,7 +144,7 @@ const Calendar = ({
                 </div>
               ))}
             {dayEvents.length > 3 && (
-              <div className="text-[12px] pl-1 text-gray-500 dark:text-gray-400">
+              <div className="text-[13px] pl-1 text-gray-500 dark:text-gray-400">
                 +{dayEvents.length - 2}
               </div>
             )}
@@ -166,6 +176,24 @@ const Calendar = ({
     return { year, month, days };
   };
 
+  useEffect(() => {
+    if (swiperRef.current) {
+      swiperRef.current.slideTo(12);
+    }
+  }, [resetToken, baseDate]);
+
+  useEffect(() => {
+    const by = baseDate.getFullYear();
+    const bm = baseDate.getMonth() + 1;
+    setCurrentYear(by);
+    setCurrentMonth(bm);
+    // reset pickerYear but clamp into allowed range
+    setPickerYear((prev) => {
+      if (prev < minYear || prev > maxYear) return by;
+      return prev;
+    });
+  }, [baseDate, minYear, maxYear]);
+
   return (
     <Card className="select-none flex p-0 flex-col h-full !p-4">
       <Swiper
@@ -192,39 +220,18 @@ const Calendar = ({
             <SwiperSlide key={offset} className="flex flex-col h-full p-4">
               <div className="flex justify-between items-center mb-2 flex-none px-2 gap-2">
                 <div className="flex items-baseline gap-1 text-black dark:text-white">
-                  <select
-                    value={year}
-                    onChange={(e: any) =>
-                      handleChangeMonthYear(
-                        parseInt(e.target.value, 10),
-                        month + 1
-                      )
-                    }
-                    className="bg-transparent text-[25px] font-bold focus:outline-none cursor-pointer hidden-appearance"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentYear(year);
+                      setCurrentMonth(month + 1);
+                      setPickerYear(year);
+                      setMonthModalOpen(true);
+                    }}
+                    className="bg-transparent text-[30px] font-bold focus:outline-none cursor-pointer hidden-appearance"
                   >
-                    {[
-                      baseDate.getFullYear() - 1,
-                      baseDate.getFullYear(),
-                      baseDate.getFullYear() + 1,
-                    ].map((y) => (
-                      <option key={y} value={y} className="text-black">
-                        {y}年
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={month + 1}
-                    onChange={(e: any) =>
-                      handleChangeMonthYear(year, parseInt(e.target.value, 10))
-                    }
-                    className="bg-transparent text-[25px] font-bold focus:outline-none cursor-pointer hidden-appearance"
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                      <option key={m} value={m} className="text-black">
-                        {m}月
-                      </option>
-                    ))}
-                  </select>
+                    {year}年{month + 1}月
+                  </button>
                 </div>
                 <div className="flex-none flex gap-1">
                   <button
@@ -271,6 +278,100 @@ const Calendar = ({
           );
         })}
       </Swiper>
+      {monthModalOpen && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40"
+          onClick={() => setMonthModalOpen(false)}
+        >
+          <div
+            className="relative bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-[420px] max-w-[92%] p-7"
+            onClick={(e: any) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="absolute right-10 top-8 text-[28px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              onClick={() => setMonthModalOpen(false)}
+            >
+              ✕
+            </button>
+            <div className="flex items-center justify_between mb-2">
+              <button
+                type="button"
+                className="px-2 py-1 text-sm rounded-full text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-40"
+                onClick={() => yearSwiperRef.current?.slidePrev()}
+                disabled={pickerYear <= minYear}
+              >
+                <ChevronLeft size={28} />
+              </button>
+              <span className="text-[32px] font-bold text-gray-800 dark:text-white">
+                {pickerYear}年
+              </span>
+              <button
+                type="button"
+                className="px-2 py-1 text-sm rounded-full text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-40"
+                onClick={() => yearSwiperRef.current?.slideNext()}
+                disabled={pickerYear >= maxYear}
+              >
+                <ChevronRight size={28} />
+              </button>
+            </div>
+            <Swiper
+              className="w-full mt-2"
+              slidesPerView={1}
+              onSwiper={(sw: any) => {
+                yearSwiperRef.current = sw;
+              }}
+              initialSlide={pickerYear - minYear}
+              speed={300}
+              onSlideChange={(sw: any) => {
+                const idx = sw.realIndex ?? sw.activeIndex ?? 0;
+                const y = minYear + idx;
+                setPickerYear(y);
+              }}
+            >
+              {Array.from(
+                { length: maxYear - minYear + 1 },
+                (_, i) => minYear + i
+              ).map((year) => (
+                <SwiperSlide key={year} className="p-3">
+                  <div className="grid grid-cols-3 gap-2 mt-1">
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
+                      const isCurrent =
+                        year === currentYear && m === currentMonth;
+                      const diffMonths =
+                        (year - baseDate.getFullYear()) * 12 +
+                        (m - (baseDate.getMonth() + 1));
+                      const isDisabled = diffMonths < -12 || diffMonths > 12;
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          className={`py-3 rounded-full text-[21px] font-medium transition-colors border border-transparent ${
+                            isCurrent
+                              ? "bg-blue-500 text-white"
+                              : isDisabled
+                              ? "bg-black/5 text-gray-400 dark:bg-white/5 dark:text-gray-500 cursor-default"
+                              : "bg-black/5 text-gray-700 hover:bg-black/10 dark:bg-white/5 dark:text-gray-100 dark:hover:bg-white/10"
+                          }`}
+                          onClick={() => {
+                            if (isDisabled) return;
+                            handleChangeMonthYear(year, m);
+                            setCurrentYear(year);
+                            setCurrentMonth(m);
+                            setMonthModalOpen(false);
+                          }}
+                        >
+                          {m}月
+                        </button>
+                      );
+                    })}
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };

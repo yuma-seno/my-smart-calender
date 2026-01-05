@@ -7,6 +7,7 @@ import "swiper/css";
 
 interface NewsProps {
   rssUrl: string;
+  resetToken: number;
 }
 
 interface NewsItem {
@@ -18,7 +19,7 @@ interface NewsItem {
   imageUrl?: string;
 }
 
-const News = ({ rssUrl }: NewsProps) => {
+const News = ({ rssUrl, resetToken }: NewsProps) => {
   const [news, setNews] = useState([] as NewsItem[]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState(null as string | null);
@@ -86,23 +87,36 @@ const News = ({ rssUrl }: NewsProps) => {
         );
 
         setNews(newsWithOg);
-        window.setTimeout(
-          () =>
-            setCurrentIndex(
-              swiperRef.current?.realIndex ?? swiperRef.current?.activeIndex
-            ),
-          100
-        );
+        window.setTimeout(() => {
+          if (!swiperRef.current) return;
+          setCurrentIndex(
+            swiperRef.current?.realIndex ?? swiperRef.current?.activeIndex
+          );
+        }, 100);
       } catch (err) {
         setError("News Error");
       }
     };
     fetchNews();
-    const intervalId = window.setInterval(fetchNews, 10 * 1000);
+    const intervalId = window.setInterval(fetchNews, 5 * 60 * 1000);
     return () => {
       window.clearInterval(intervalId);
     };
   }, [rssUrl]);
+
+  useEffect(() => {
+    if (swiperRef.current) {
+      try {
+        if (typeof swiperRef.current.slideToLoop === "function") {
+          swiperRef.current.slideToLoop(0);
+        } else {
+          swiperRef.current.slideTo(0);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [resetToken]);
 
   const handleNext = () => swiperRef.current?.slideNext();
   const handlePrev = () => swiperRef.current?.slidePrev();

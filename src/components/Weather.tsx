@@ -4,6 +4,8 @@ import Card from "./Card";
 
 interface WeatherProps {
   city: string;
+  resetToken: number;
+  dateChangeToken: number;
 }
 
 interface ForecastItem {
@@ -13,10 +15,11 @@ interface ForecastItem {
   minTemp: number;
 }
 
-const Weather = ({ city }: WeatherProps) => {
+const Weather = ({ city, resetToken, dateChangeToken }: WeatherProps) => {
   const [forecast, setForecast] = useState([] as ForecastItem[]);
   const [locationName, setLocationName] = useState("");
   const [loading, setLoading] = useState(false);
+  const scrollRef = React.useRef(null as any);
 
   useEffect(() => {
     if (!city) return;
@@ -55,7 +58,17 @@ const Weather = ({ city }: WeatherProps) => {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [city]);
+  }, [city, dateChangeToken]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      try {
+        scrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
+      } catch (e) {
+        scrollRef.current.scrollLeft = 0;
+      }
+    }
+  }, [resetToken]);
 
   const getWeatherIcon = (code: number) => {
     if (code <= 1) return "☀️";
@@ -70,7 +83,10 @@ const Weather = ({ city }: WeatherProps) => {
   return (
     <Card className="p-4">
       {!loading && (
-        <div className="flex-1 flex overflow-x-auto pb-1 hidden-scrollbar items-center">
+        <div
+          ref={scrollRef}
+          className="flex-1 flex overflow-x-auto pb-1 hidden-scrollbar items-center"
+        >
           {forecast.map((item: ForecastItem, i: number) => (
             <div
               key={i}

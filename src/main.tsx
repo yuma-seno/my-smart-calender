@@ -117,7 +117,10 @@ const App = () => {
   const [config, setConfig] = useState(getInitialConfig() as SmartDashConfig);
   const [selectedDate, setSelectedDate] = useState(null as Date | null);
   const [events, setEvents] = useState({} as Record<string, any[]>);
-  const selectionTimerRef = useRef(null as number | null);
+  const [resetToken, setResetToken] = useState(0 as number);
+  const inactivityTimerRef = useRef(null as number | null);
+  const [dateChangeToken, setDateChangeToken] = useState(0 as number);
+  const lastDateRef = useRef(now as Date);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -127,6 +130,29 @@ const App = () => {
       window.clearInterval(id);
     };
   }, []);
+
+  // 日付が変わったタイミングを検知してトークンを更新
+  useEffect(() => {
+    const prev = lastDateRef.current;
+    if (
+      prev.getFullYear() !== now.getFullYear() ||
+      prev.getMonth() !== now.getMonth() ||
+      prev.getDate() !== now.getDate()
+    ) {
+      setDateChangeToken((prevToken: number) => prevToken + 1);
+    }
+    lastDateRef.current = now;
+  }, [now]);
+
+  const registerInteraction = () => {
+    if (inactivityTimerRef.current) {
+      window.clearTimeout(inactivityTimerRef.current);
+    }
+    inactivityTimerRef.current = window.setTimeout(() => {
+      setResetToken((prev: number) => prev + 1);
+      setSelectedDate(null);
+    }, 60 * 1000);
+  };
 
   useEffect(() => {
     const calendars = (config.calendars || []).filter(
@@ -178,19 +204,6 @@ const App = () => {
     };
   }, [config.calendars]);
 
-  useEffect(() => {
-    if (selectedDate) {
-      if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
-      selectionTimerRef.current = setTimeout(
-        () => setSelectedDate(null),
-        15000
-      );
-    }
-    return () => {
-      if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
-    };
-  }, [selectedDate]);
-
   // テーマに応じて <html> に dark クラスを付け外し
   useEffect(() => {
     const root = document.documentElement;
@@ -214,8 +227,23 @@ const App = () => {
     setSettingsOpen(false);
   };
 
+  useEffect(() => {
+    registerInteraction();
+    return () => {
+      if (inactivityTimerRef.current) {
+        window.clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className="w-screen h-screen overflow-hidden flex flex-col font-sans transition-colors duration-300 relative bg-gray-100 dark:bg-neutral-900">
+    <div
+      className="w-screen h-screen overflow-hidden flex flex-col font-sans transition-colors duration-300 relative bg-gray-100 dark:bg-neutral-900"
+      onPointerDown={registerInteraction}
+      onKeyDown={registerInteraction}
+      onWheel={registerInteraction}
+      onTouchStart={registerInteraction}
+    >
       {/* 設定ボタン (Absolute配置) */}
       <div className="absolute top-[1%] right-[1%] z-50 flex gap-2">
         <button
@@ -240,6 +268,7 @@ const App = () => {
             <Calendar
               events={events}
               selectedDate={selectedDate}
+              resetToken={resetToken}
               today={now}
               onSelectDate={setSelectedDate}
             />
@@ -249,7 +278,11 @@ const App = () => {
         {/* Right Column */}
         <div className="flex flex-col gap-4 h-full pt-10">
           <div className="flex-none h-[180px]">
-            <Weather city={config.city} />
+            <Weather
+              city={config.city}
+              resetToken={resetToken}
+              dateChangeToken={dateChangeToken}
+            />
           </div>
           <div className="flex-1 min-h-0 relative">
             <div className="absolute inset-0">
@@ -261,7 +294,7 @@ const App = () => {
             </div>
           </div>
           <div className="flex-none h-[250px]">
-            <News rssUrl={config.rssUrl} />
+            <News rssUrl={config.rssUrl} resetToken={resetToken} />
           </div>
         </div>
       </div>
