@@ -26,6 +26,7 @@ const News = ({ rssUrl, resetToken }: NewsProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState(null as string | null);
   const swiperRef = useRef(null as any);
+  const ogImageCacheRef = useRef<Map<string, string | null>>(new Map());
 
   useEffect(() => {
     if (!rssUrl) {
@@ -81,6 +82,17 @@ const News = ({ rssUrl, resetToken }: NewsProps) => {
         const newsWithOg: NewsItem[] = await Promise.all(
           baseNews.map(async (item: NewsItem) => {
             if (!item.link) return item;
+
+            const cacheKey = item.link;
+            const cached = ogImageCacheRef.current.get(cacheKey);
+
+            if (cached !== undefined) {
+              if (cached) {
+                return { ...item, imageUrl: cached } as NewsItem;
+              }
+              return item;
+            }
+
             try {
               const html = await fetchWithProxy(item.link);
               const ogDoc = new DOMParser().parseFromString(html, "text/html");
@@ -88,9 +100,13 @@ const News = ({ rssUrl, resetToken }: NewsProps) => {
                 ogDoc
                   .querySelector('meta[property="og:image"]')
                   ?.getAttribute("content") || undefined;
+
+              ogImageCacheRef.current.set(cacheKey, ogImage || null);
+
               if (!ogImage) return item;
               return { ...item, imageUrl: ogImage } as NewsItem;
             } catch {
+              ogImageCacheRef.current.set(cacheKey, null);
               return item;
             }
           })
@@ -122,6 +138,9 @@ const News = ({ rssUrl, resetToken }: NewsProps) => {
         setError("News Error");
       }
     };
+    // RSS URL単位でキャッシュを1回分の寿命とする
+    ogImageCacheRef.current = new Map();
+
     fetchNews();
     const intervalId = window.setInterval(fetchNews, 5 * 60 * 1000);
     return () => {
