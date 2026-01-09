@@ -89,13 +89,15 @@ export const getInitialTheme = (): string => {
     const savedTheme = getCookie(THEME_COOKIE_KEY);
     if (savedTheme) {
       const lowered = savedTheme.toLowerCase();
+      if (lowered.includes("system") || lowered.includes("auto"))
+        return "system";
       if (lowered.includes("light")) return "light";
       if (lowered.includes("dark")) return "dark";
     }
   } catch (e) {
     // ignore and fall back to default
   }
-  return "dark";
+  return "system";
 };
 
 export const saveConfigToCookie = (config: SmartDashConfig) => {

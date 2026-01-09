@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Settings, Moon, Sun } from "lucide-react";
+import { Settings, Moon, Sun, Monitor } from "lucide-react";
 
 import Calendar from "./components/Calendar";
 import Weather from "./components/Weather";
@@ -26,14 +26,33 @@ import { useCalendarEvents } from "./hooks/useCalendarEvents";
 const INACTIVITY_TIMEOUT_MS = 60 * 1000;
 
 type Theme = "light" | "dark";
+type ThemePreference = Theme | "system";
 
 const App: React.FC = () => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const initial = getInitialTheme();
-    return (
-      initial === "light" || initial === "dark" ? initial : "dark"
-    ) as Theme;
+  const [themePreference, setThemePreference] = useState<ThemePreference>(
+    () => {
+      const initial = getInitialTheme();
+      return initial === "light" || initial === "dark" || initial === "system"
+        ? (initial as ThemePreference)
+        : "system";
+    }
+  );
+  const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return false;
+    }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
+
+  const effectiveTheme: Theme = useMemo(() => {
+    if (themePreference === "system") {
+      return systemPrefersDark ? "dark" : "light";
+    }
+    return themePreference;
+  }, [themePreference, systemPrefersDark]);
   const [config, setConfig] = useState<SmartDashConfig>(() =>
     getInitialConfig()
   );
@@ -61,18 +80,50 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return;
+    }
+
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (e: MediaQueryListEvent) => {
+      setSystemPrefersDark(e.matches);
+    };
+
+    setSystemPrefersDark(mql.matches);
+
+    if (typeof mql.addEventListener === "function") {
+      mql.addEventListener("change", onChange);
+      return () => mql.removeEventListener("change", onChange);
+    }
+
+    // Safari fallback
+    // eslint-disable-next-line deprecation/deprecation
+    mql.addListener(onChange);
+    // eslint-disable-next-line deprecation/deprecation
+    return () => mql.removeListener(onChange);
+  }, []);
+
+  useEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") {
+    if (effectiveTheme === "dark") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
-  }, [theme]);
+  }, [effectiveTheme]);
 
   const toggleTheme = () => {
-    const newTheme: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    saveThemeToCookie(newTheme);
+    const next: ThemePreference =
+      themePreference === "system"
+        ? "light"
+        : themePreference === "light"
+        ? "dark"
+        : "system";
+    setThemePreference(next);
+    saveThemeToCookie(next);
   };
 
   const saveSettings = (newConfig: SmartDashConfig) => {
@@ -106,9 +157,20 @@ const App: React.FC = () => {
         <button
           type="button"
           onClick={toggleTheme}
+          title={
+            themePreference === "system"
+              ? `Theme: System (${effectiveTheme})`
+              : `Theme: ${themePreference}`
+          }
           className="p-2 bg-white hover:bg-gray-50 dark:bg-white/10 dark:hover:bg-white/20 rounded-full shadow-sm text-gray-700 dark:text-gray-200"
         >
-          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          {themePreference === "system" ? (
+            <Monitor size={18} />
+          ) : themePreference === "dark" ? (
+            <Moon size={18} />
+          ) : (
+            <Sun size={18} />
+          )}
         </button>
         <button
           type="button"
