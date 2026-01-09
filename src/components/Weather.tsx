@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Cloud } from "lucide-react";
 import Card from "./Card";
+import { subscribePeriodic } from "../utils/minuteTicker";
 
 interface WeatherProps {
   city: string;
@@ -75,9 +76,15 @@ const Weather = ({ city, resetToken, dateChangeToken }: WeatherProps) => {
       }
     };
     fetchWeather();
-    const intervalId = window.setInterval(fetchWeather, 10 * 60 * 1000);
+    const unsubscribe = subscribePeriodic(
+      10,
+      () => {
+        fetchWeather();
+      },
+      { fireImmediately: false, alignToWallClock: true }
+    );
     return () => {
-      window.clearInterval(intervalId);
+      unsubscribe();
     };
   }, [city, dateChangeToken]);
 

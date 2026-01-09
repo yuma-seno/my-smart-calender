@@ -10,7 +10,7 @@ interface ScheduleProps {
 
 const Schedule = ({ events, selectedDate, today }: ScheduleProps) => {
   const displayDate = selectedDate || today;
-  const isToday = new Date().toDateString() === displayDate.toDateString();
+  const isToday = today.toDateString() === displayDate.toDateString();
   const y = displayDate.getFullYear();
   const m = displayDate.getMonth() + 1;
   const d = displayDate.getDate();

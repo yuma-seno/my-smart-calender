@@ -3,6 +3,7 @@ import { CalendarConfig } from "../types/config";
 import { fetchWithProxy } from "../utils/fetchWithProxy";
 import { parseICal } from "../utils/ical";
 import { HOLIDAY_ICAL_URL } from "../utils/config";
+import { subscribePeriodic } from "../utils/minuteTicker";
 import type { CalendarEvent, CalendarEventMap } from "../types/events";
 
 export const useCalendarEvents = (
@@ -60,11 +61,17 @@ export const useCalendarEvents = (
     };
 
     fetchEvents();
-    const intervalId = window.setInterval(fetchEvents, 5 * 60 * 1000);
+    const unsubscribe = subscribePeriodic(
+      5,
+      () => {
+        fetchEvents();
+      },
+      { fireImmediately: false, alignToWallClock: true }
+    );
 
     return () => {
       active = false;
-      window.clearInterval(intervalId);
+      unsubscribe();
     };
   }, [calendars]);
 

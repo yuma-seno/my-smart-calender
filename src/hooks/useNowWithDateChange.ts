@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { subscribeMinuteTick } from "../utils/minuteTicker";
 
 export const useNowWithDateChange = () => {
   const [now, setNow] = useState(new Date() as Date);
@@ -6,25 +7,21 @@ export const useNowWithDateChange = () => {
   const lastDateRef = useRef(now as Date);
 
   useEffect(() => {
-    const id = window.setInterval(() => {
-      setNow(new Date() as Date);
-    }, 60 * 1000);
-    return () => {
-      window.clearInterval(id);
-    };
-  }, []);
+    const unsubscribe = subscribeMinuteTick((nextNow: Date) => {
+      const prev = lastDateRef.current;
+      if (
+        prev.getFullYear() !== nextNow.getFullYear() ||
+        prev.getMonth() !== nextNow.getMonth() ||
+        prev.getDate() !== nextNow.getDate()
+      ) {
+        setDateChangeToken((prevToken: number) => prevToken + 1);
+      }
+      lastDateRef.current = nextNow;
+      setNow(nextNow);
+    });
 
-  useEffect(() => {
-    const prev = lastDateRef.current;
-    if (
-      prev.getFullYear() !== now.getFullYear() ||
-      prev.getMonth() !== now.getMonth() ||
-      prev.getDate() !== now.getDate()
-    ) {
-      setDateChangeToken((prevToken: number) => prevToken + 1);
-    }
-    lastDateRef.current = now;
-  }, [now]);
+    return unsubscribe;
+  }, []);
 
   return { now, dateChangeToken } as const;
 };

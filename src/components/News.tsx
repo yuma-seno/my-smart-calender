@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import Card from "./Card";
 import { fetchWithProxy } from "../utils/fetchWithProxy";
+import { subscribePeriodic } from "../utils/minuteTicker";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 
@@ -142,9 +143,15 @@ const News = ({ rssUrl, resetToken }: NewsProps) => {
     ogImageCacheRef.current = new Map();
 
     fetchNews();
-    const intervalId = window.setInterval(fetchNews, 5 * 60 * 1000);
+    const unsubscribe = subscribePeriodic(
+      5,
+      () => {
+        fetchNews();
+      },
+      { fireImmediately: false, alignToWallClock: true }
+    );
     return () => {
-      window.clearInterval(intervalId);
+      unsubscribe();
     };
   }, [rssUrl]);
 
