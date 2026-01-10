@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
-import { SmartDashConfig, CalendarConfig } from "../types/config";
-import { HOLIDAY_ICAL_URL } from "../utils/config";
+import {
+  SmartCalenderConfig,
+  CalendarConfig,
+  ThemeMode,
+} from "../types/config";
+import {
+  DEFAULT_CALENDAR_COLOR,
+  DEFAULT_CONFIG,
+  HOLIDAY_ICAL_URL,
+} from "../utils/config";
 
 interface SettingsModalProps {
-  config: SmartDashConfig;
-  onSave: (config: SmartDashConfig) => void;
+  config: SmartCalenderConfig;
+  onSave: (config: SmartCalenderConfig) => void;
   onClose: () => void;
 }
 
@@ -14,6 +22,9 @@ interface SettingsForm {
   city: string;
   rssUrl: string;
   calendars: CalendarConfig[];
+  themeMode: ThemeMode;
+  lightStart: string;
+  darkStart: string;
 }
 
 const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
@@ -24,6 +35,12 @@ const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
       config.calendars?.filter(
         (c: CalendarConfig) => c.url !== HOLIDAY_ICAL_URL
       ) || [],
+    themeMode: config.themeMode,
+    lightStart:
+      config.themeSchedule?.lightStart ||
+      DEFAULT_CONFIG.themeSchedule.lightStart,
+    darkStart:
+      config.themeSchedule?.darkStart || DEFAULT_CONFIG.themeSchedule.darkStart,
   } as SettingsForm);
 
   useEffect(() => {
@@ -34,6 +51,13 @@ const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
         config.calendars?.filter(
           (c: CalendarConfig) => c.url !== HOLIDAY_ICAL_URL
         ) || [],
+      themeMode: config.themeMode,
+      lightStart:
+        config.themeSchedule?.lightStart ||
+        DEFAULT_CONFIG.themeSchedule.lightStart,
+      darkStart:
+        config.themeSchedule?.darkStart ||
+        DEFAULT_CONFIG.themeSchedule.darkStart,
     });
   }, [config]);
 
@@ -47,7 +71,10 @@ const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
   ) => {
     setFormData((prev: SettingsForm) => {
       const next = [...prev.calendars];
-      const target = next[index] || { url: "", color: "#60a5fa" };
+      const target = next[index] || {
+        url: "",
+        color: DEFAULT_CALENDAR_COLOR,
+      };
       next[index] = { ...target, [field]: value } as CalendarConfig;
       return { ...prev, calendars: next };
     });
@@ -58,7 +85,7 @@ const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
       ...prev,
       calendars: [
         ...prev.calendars,
-        { url: "", color: "#60a5fa" } as CalendarConfig,
+        { url: "", color: DEFAULT_CALENDAR_COLOR } as CalendarConfig,
       ],
     }));
   };
@@ -76,7 +103,7 @@ const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
     const calendars = (formData.calendars || [])
       .map((c: CalendarConfig) => ({
         url: (c.url || "").trim(),
-        color: c.color || "#60a5fa",
+        color: c.color || DEFAULT_CALENDAR_COLOR,
         ...(c.name ? { name: c.name.trim() } : {}),
       }))
       .filter((c: CalendarConfig) => c.url.length);
@@ -84,6 +111,11 @@ const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
       city: formData.city,
       rssUrl: formData.rssUrl,
       calendars,
+      themeMode: formData.themeMode,
+      themeSchedule: {
+        lightStart: formData.lightStart,
+        darkStart: formData.darkStart,
+      },
     });
   };
 
@@ -102,6 +134,50 @@ const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
           </button>
         </div>
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm mb-1 text-gray-500 dark:text-gray-400">
+              テーマ
+            </label>
+            <select
+              value={formData.themeMode}
+              onChange={(e: any) => handleChange("themeMode", e.target.value)}
+              className="w-full bg-gray-100 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-xl p-3 focus:outline-none focus:ring-2 ring-blue-500"
+            >
+              <option value="schedule">時刻で自動切替</option>
+              <option value="light">ライト固定</option>
+              <option value="dark">ダーク固定</option>
+            </select>
+            {formData.themeMode === "schedule" && (
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label className="block text-xs mb-1 text-gray-500 dark:text-gray-400">
+                    ライト開始
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.lightStart}
+                    onChange={(e: any) =>
+                      handleChange("lightStart", e.target.value)
+                    }
+                    className="w-full bg-gray-100 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-xl p-3 focus:outline-none focus:ring-2 ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1 text-gray-500 dark:text-gray-400">
+                    ダーク開始
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.darkStart}
+                    onChange={(e: any) =>
+                      handleChange("darkStart", e.target.value)
+                    }
+                    className="w-full bg-gray-100 dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-xl p-3 focus:outline-none focus:ring-2 ring-blue-500"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
           <div>
             <label className="block text-sm mb-1 text-gray-500 dark:text-gray-400">
               地域
@@ -128,7 +204,7 @@ const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
             <label className="block text-sm mb-1 text-gray-500 dark:text-gray-400">
               iCal カレンダー一覧
             </label>
-            <div className="space-y-2 h-35 overflow-y-auto pr-1">
+            <div className="space-y-2 h-45 overflow-y-auto pr-1">
               {formData.calendars.map((cal: CalendarConfig, index: number) => (
                 <div
                   key={index}
@@ -136,7 +212,7 @@ const SettingsModal = ({ config, onSave, onClose }: SettingsModalProps) => {
                 >
                   <input
                     type="color"
-                    value={cal.color || "#60a5fa"}
+                    value={cal.color || DEFAULT_CALENDAR_COLOR}
                     onChange={(e: any) =>
                       handleCalendarChange(index, "color", e.target.value)
                     }

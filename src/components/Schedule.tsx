@@ -1,6 +1,7 @@
 import React from "react";
 import Card from "./Card";
 import type { CalendarEventMap, CalendarEvent } from "../types/events";
+import { DEFAULT_CALENDAR_COLOR } from "../utils/config";
 
 interface ScheduleProps {
   events: CalendarEventMap;
@@ -35,7 +36,9 @@ const Schedule = ({ events, selectedDate, today }: ScheduleProps) => {
             <div
               key={i}
               className="bg-black/5 dark:bg-white/5 p-2 rounded-lg border-l-4 shrink-0"
-              style={{ borderLeftColor: ev.calendarColor || "#60a5fa" }}
+              style={{
+                borderLeftColor: ev.calendarColor || DEFAULT_CALENDAR_COLOR,
+              }}
             >
               <div className="text-[16px] text-gray-500 dark:text-gray-200">
                 {ev.isAllDay || !ev.timeStr

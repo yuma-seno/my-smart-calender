@@ -12,13 +12,11 @@ import Weather from "./components/Weather";
 import Schedule from "./components/Schedule";
 import News from "./components/News";
 import SettingsModal from "./components/SettingsModal";
-import { SmartDashConfig } from "./types/config";
+import { SmartCalenderConfig } from "./types/config";
 import {
   getInitialConfig,
-  getInitialTheme,
   normalizeConfig,
   saveConfigToCookie,
-  saveThemeToCookie,
 } from "./utils/config";
 import { useNowWithDateChange } from "./hooks/useNowWithDateChange";
 import { useCalendarEvents } from "./hooks/useCalendarEvents";
@@ -26,34 +24,37 @@ import { useCalendarEvents } from "./hooks/useCalendarEvents";
 const INACTIVITY_TIMEOUT_MS = 60 * 1000;
 
 type Theme = "light" | "dark";
-type ThemePreference = Theme | "system";
+
+const parseTimeToMinutes = (hhmm: string): number => {
+  const [h, m] = hhmm.split(":");
+  const hours = Number(h);
+  const minutes = Number(m);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return 0;
+  return hours * 60 + minutes;
+};
+
+const getThemeForSchedule = (
+  now: Date,
+  lightStart: string,
+  darkStart: string
+): Theme => {
+  const current = now.getHours() * 60 + now.getMinutes();
+  const light = parseTimeToMinutes(lightStart);
+  const dark = parseTimeToMinutes(darkStart);
+
+  // If equal, treat as always dark (arbitrary but deterministic).
+  if (light === dark) return "dark";
+
+  // dark interval is [darkStart, lightStart)
+  if (dark < light) {
+    return current >= dark && current < light ? "dark" : "light";
+  }
+  // wraps midnight
+  return current >= dark || current < light ? "dark" : "light";
+};
 
 const App: React.FC = () => {
-  const [themePreference, setThemePreference] = useState<ThemePreference>(
-    () => {
-      const initial = getInitialTheme();
-      return initial === "light" || initial === "dark" || initial === "system"
-        ? (initial as ThemePreference)
-        : "system";
-    }
-  );
-  const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(() => {
-    if (
-      typeof window === "undefined" ||
-      typeof window.matchMedia !== "function"
-    ) {
-      return false;
-    }
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
-
-  const effectiveTheme: Theme = useMemo(() => {
-    if (themePreference === "system") {
-      return systemPrefersDark ? "dark" : "light";
-    }
-    return themePreference;
-  }, [themePreference, systemPrefersDark]);
-  const [config, setConfig] = useState<SmartDashConfig>(() =>
+  const [config, setConfig] = useState<SmartCalenderConfig>(() =>
     getInitialConfig()
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -62,6 +63,21 @@ const App: React.FC = () => {
   const inactivityTimerRef = useRef<number | null>(null);
   const { now, dateChangeToken } = useNowWithDateChange();
   const events = useCalendarEvents(config.calendars);
+
+  const effectiveTheme: Theme = useMemo(() => {
+    if (config.themeMode === "dark") return "dark";
+    if (config.themeMode === "light") return "light";
+    return getThemeForSchedule(
+      now,
+      config.themeSchedule.lightStart,
+      config.themeSchedule.darkStart
+    );
+  }, [
+    config.themeMode,
+    config.themeSchedule.darkStart,
+    config.themeSchedule.lightStart,
+    now,
+  ]);
 
   const timeLabel = useMemo(() => {
     const hours = String(now.getHours()).padStart(2, "0");
@@ -80,33 +96,6 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      typeof window.matchMedia !== "function"
-    ) {
-      return;
-    }
-
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = (e: MediaQueryListEvent) => {
-      setSystemPrefersDark(e.matches);
-    };
-
-    setSystemPrefersDark(mql.matches);
-
-    if (typeof mql.addEventListener === "function") {
-      mql.addEventListener("change", onChange);
-      return () => mql.removeEventListener("change", onChange);
-    }
-
-    // Safari fallback
-    // eslint-disable-next-line deprecation/deprecation
-    mql.addListener(onChange);
-    // eslint-disable-next-line deprecation/deprecation
-    return () => mql.removeListener(onChange);
-  }, []);
-
-  useEffect(() => {
     const root = document.documentElement;
     if (effectiveTheme === "dark") {
       root.classList.add("dark");
@@ -115,19 +104,20 @@ const App: React.FC = () => {
     }
   }, [effectiveTheme]);
 
-  const toggleTheme = () => {
-    const next: ThemePreference =
-      themePreference === "system"
+  const cycleThemeMode = () => {
+    const next =
+      config.themeMode === "schedule"
         ? "light"
-        : themePreference === "light"
+        : config.themeMode === "light"
         ? "dark"
-        : "system";
-    setThemePreference(next);
-    saveThemeToCookie(next);
+        : "schedule";
+    const updated = normalizeConfig({ ...config, themeMode: next } as any);
+    setConfig(updated);
+    saveConfigToCookie(updated);
   };
 
-  const saveSettings = (newConfig: SmartDashConfig) => {
-    const normalized = normalizeConfig(newConfig);
+  const saveSettings = (newConfig: SmartCalenderConfig) => {
+    const normalized = normalizeConfig(newConfig as any);
     setConfig(normalized);
     saveConfigToCookie(normalized);
     setSettingsOpen(false);
@@ -156,17 +146,17 @@ const App: React.FC = () => {
         </span>
         <button
           type="button"
-          onClick={toggleTheme}
+          onClick={cycleThemeMode}
           title={
-            themePreference === "system"
-              ? `Theme: System (${effectiveTheme})`
-              : `Theme: ${themePreference}`
+            config.themeMode === "schedule"
+              ? `Theme: Schedule (Light ${config.themeSchedule.lightStart} / Dark ${config.themeSchedule.darkStart})`
+              : `Theme: ${config.themeMode}`
           }
           className="p-2 bg-white hover:bg-gray-50 dark:bg-white/10 dark:hover:bg-white/20 rounded-full shadow-sm text-gray-700 dark:text-gray-200"
         >
-          {themePreference === "system" ? (
+          {config.themeMode === "schedule" ? (
             <SunMoon size={18} />
-          ) : themePreference === "dark" ? (
+          ) : config.themeMode === "dark" ? (
             <Moon size={18} />
           ) : (
             <Sun size={18} />

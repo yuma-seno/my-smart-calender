@@ -11,6 +11,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 
 import type { CalendarEventMap, CalendarEvent } from "../types/events";
+import { DEFAULT_CALENDAR_COLOR } from "../utils/config";
 
 interface CalendarProps {
   events: CalendarEventMap;
@@ -147,7 +148,9 @@ const Calendar = ({
                 ${ev.isEnd ? "rounded-r-sm mr-0.5" : "-mr-1"}
                 ${!ev.isStart && !ev.isEnd ? "-mx-1" : ""}
               `}
-                  style={{ backgroundColor: ev.calendarColor || "#60a5fa" }}
+                  style={{
+                    backgroundColor: ev.calendarColor || DEFAULT_CALENDAR_COLOR,
+                  }}
                   title={ev.summary}
                 >
                   {ev.isStart && <span className="truncate">{ev.summary}</span>}

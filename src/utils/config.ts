@@ -1,22 +1,61 @@
-import { SmartDashConfig, CalendarConfig } from "../types/config";
+import {
+  SmartCalenderConfig,
+  CalendarConfig,
+  ThemeMode,
+  ThemeSchedule,
+} from "../types/config";
 
-export const DEFAULT_CONFIG: SmartDashConfig = {
+export const DEFAULT_CALENDAR_COLOR = "#60a5fa";
+
+export const DEFAULT_CONFIG: SmartCalenderConfig = {
   city: "Tokyo",
   rssUrl: "https://news.web.nhk/n-data/conf/na/rss/cat0.xml",
   calendars: [],
+  themeMode: "schedule",
+  themeSchedule: {
+    lightStart: "07:00",
+    darkStart: "19:00",
+  },
 };
 
 export const HOLIDAY_ICAL_URL =
   "https://calendar.google.com/calendar/ical/ja.japanese%23holiday%40group.v.calendar.google.com/public/basic.ics";
 
-const CONFIG_COOKIE_KEY = "smartDashConfig";
-const THEME_COOKIE_KEY = "smartDashTheme";
+const CONFIG_COOKIE_KEY = "smartCalenderConfig";
+const LEGACY_CONFIG_COOKIE_KEY = "smartDashConfig";
+const LEGACY_THEME_COOKIE_KEY = "smartDashTheme";
+
+const isValidTimeHHMM = (value: unknown): value is string => {
+  if (typeof value !== "string") return false;
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value.trim());
+};
+
+const normalizeThemeMode = (value: unknown): ThemeMode => {
+  if (value === "light" || value === "dark" || value === "schedule") {
+    return value;
+  }
+  return DEFAULT_CONFIG.themeMode;
+};
+
+const normalizeThemeSchedule = (raw: any): ThemeSchedule => {
+  const lightStart = isValidTimeHHMM(raw?.lightStart)
+    ? raw.lightStart.trim()
+    : DEFAULT_CONFIG.themeSchedule.lightStart;
+  const darkStart = isValidTimeHHMM(raw?.darkStart)
+    ? raw.darkStart.trim()
+    : DEFAULT_CONFIG.themeSchedule.darkStart;
+  return { lightStart, darkStart };
+};
 
 export const normalizeConfig = (
-  raw?: Partial<SmartDashConfig> & { icalUrl?: string; icalUrls?: string[] }
-): SmartDashConfig => {
+  raw?:
+    | Partial<SmartCalenderConfig> & {
+        icalUrl?: string;
+        icalUrls?: string[];
+      } & Record<string, unknown>
+): SmartCalenderConfig => {
   const palette = [
-    "#60a5fa", // blue-400
+    DEFAULT_CALENDAR_COLOR, // blue-400
     "#22c55e", // green-500
     "#f97316", // orange-500
     "#a855f7", // purple-500
@@ -52,10 +91,15 @@ export const normalizeConfig = (
     calendars.push({ url: HOLIDAY_ICAL_URL, color: "#ef4444", name: "祝日" });
   }
 
+  const themeMode = normalizeThemeMode((raw as any)?.themeMode);
+  const themeSchedule = normalizeThemeSchedule((raw as any)?.themeSchedule);
+
   return {
     city: raw?.city || DEFAULT_CONFIG.city,
     rssUrl: raw?.rssUrl || DEFAULT_CONFIG.rssUrl,
     calendars,
+    themeMode,
+    themeSchedule,
   };
 };
 
@@ -71,12 +115,45 @@ export const getCookie = (name: string): string | null => {
   return match ? decodeURIComponent(match[2]) : null;
 };
 
-export const getInitialConfig = (): SmartDashConfig => {
+export const getInitialConfig = (): SmartCalenderConfig => {
   try {
     const savedConfig = getCookie(CONFIG_COOKIE_KEY);
     if (savedConfig) {
       const parsed = JSON.parse(savedConfig);
       return normalizeConfig(parsed);
+    }
+
+    const legacySavedConfig = getCookie(LEGACY_CONFIG_COOKIE_KEY);
+    if (legacySavedConfig) {
+      const parsed = JSON.parse(legacySavedConfig);
+
+      // Legacy migration: smartDashTheme cookie -> config.themeMode
+      const hasThemeMode =
+        parsed &&
+        typeof parsed === "object" &&
+        (parsed as any).themeMode &&
+        (parsed as any).themeSchedule;
+
+      if (!hasThemeMode) {
+        const legacyTheme = getCookie(LEGACY_THEME_COOKIE_KEY);
+        if (legacyTheme) {
+          const lowered = legacyTheme.toLowerCase();
+          const legacyMode: ThemeMode = lowered.includes("dark")
+            ? "dark"
+            : lowered.includes("light")
+            ? "light"
+            : "schedule";
+          (parsed as any).themeMode = legacyMode;
+        }
+      }
+
+      const normalized = normalizeConfig(parsed);
+      try {
+        saveConfigToCookie(normalized);
+      } catch {
+        // ignore cookie write failure
+      }
+      return normalized;
     }
   } catch (e) {
     // ignore and fall back to default
@@ -84,26 +161,6 @@ export const getInitialConfig = (): SmartDashConfig => {
   return normalizeConfig();
 };
 
-export const getInitialTheme = (): string => {
-  try {
-    const savedTheme = getCookie(THEME_COOKIE_KEY);
-    if (savedTheme) {
-      const lowered = savedTheme.toLowerCase();
-      if (lowered.includes("system") || lowered.includes("auto"))
-        return "system";
-      if (lowered.includes("light")) return "light";
-      if (lowered.includes("dark")) return "dark";
-    }
-  } catch (e) {
-    // ignore and fall back to default
-  }
-  return "system";
-};
-
-export const saveConfigToCookie = (config: SmartDashConfig) => {
+export const saveConfigToCookie = (config: SmartCalenderConfig) => {
   setCookie(CONFIG_COOKIE_KEY, JSON.stringify(config), 365);
-};
-
-export const saveThemeToCookie = (theme: string) => {
-  setCookie(THEME_COOKIE_KEY, theme, 365);
 };
