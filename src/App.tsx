@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Settings, Moon, Sun, Monitor } from "lucide-react";
+import { Settings, Moon, Sun, SunMoon } from "lucide-react";
 
 import Calendar from "./components/Calendar";
 import Weather from "./components/Weather";
@@ -165,7 +165,7 @@ const App: React.FC = () => {
           className="p-2 bg-white hover:bg-gray-50 dark:bg-white/10 dark:hover:bg-white/20 rounded-full shadow-sm text-gray-700 dark:text-gray-200"
         >
           {themePreference === "system" ? (
-            <Monitor size={18} />
+            <SunMoon size={18} />
           ) : themePreference === "dark" ? (
             <Moon size={18} />
           ) : (
