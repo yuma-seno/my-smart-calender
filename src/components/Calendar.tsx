@@ -66,26 +66,9 @@ const Calendar = ({
     const days: ReactElement[] = [];
     let cellIndex = 0;
 
-    for (let i = 0; i < startDay; i++) {
-      const isFirstRow = cellIndex < 7;
-      const isFirstCol = cellIndex % 7 === 0;
-      days.push(
-        <div
-          key={`blank-start-${i}`}
-          onClick={(e: any) => {
-            e.stopPropagation();
-            onSelectDate(null);
-          }}
-          className={`flex-1 min-w-0 min-h-0 p-0.5 relative box-border border-gray-200 dark:border-white/10 ${
-            !isFirstRow ? "border-t" : ""
-          } ${!isFirstCol ? "border-l" : ""}`}
-        />
-      );
-      cellIndex++;
-    }
+    const firstOfMonth = new Date(year, month, 1);
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateObj = new Date(year, month, d);
+    const renderDateCell = (dateObj: Date, isOutsideMonth: boolean) => {
       const dayOfWeek = dateObj.getDay();
       const isToday = today.toDateString() === dateObj.toDateString();
       const isSelected =
@@ -106,6 +89,9 @@ const Calendar = ({
       let numClass = "text-gray-700 dark:text-gray-200";
       if (isHoliday) numClass = "text-red-500 dark:text-red-400";
       else if (dayOfWeek === 6) numClass = "text-blue-500 dark:text-blue-400";
+      if (isOutsideMonth) {
+        numClass += " opacity-40";
+      }
 
       let containerClass = "border-gray-200 dark:border-white/10";
       if (isToday)
@@ -117,9 +103,10 @@ const Calendar = ({
 
       const isFirstRow = cellIndex < 7;
       const isFirstCol = cellIndex % 7 === 0;
-      days.push(
+
+      return (
         <div
-          key={d}
+          key={dateKey}
           onClick={(e: any) => {
             e.stopPropagation();
             onSelectDate(dateObj);
@@ -128,20 +115,25 @@ const Calendar = ({
           flex-1 min-w-0 min-h-0 flex flex-col justify-start p-0.5 cursor-pointer transition-all relative overflow-hidden items-center box-border
           ${!isFirstRow ? "border-t" : ""} ${!isFirstCol ? "border-l" : ""}
           ${containerClass}
+          ${isOutsideMonth ? "bg-black/0 dark:bg-white/0" : ""}
           hover:bg-gray-50 dark:hover:bg-white/5
         `}
         >
           <span
             className={`text-[20px] font-bold z-10 mb-0.5 text-center ${numClass}`}
           >
-            {d}
+            {dateObj.getDate()}
           </span>
-          <div className="w-full h-full flex flex-col gap-x-0.5 gap-y-0.5 z-10">
+          <div
+            className={`w-full h-full flex flex-col gap-x-0.5 gap-y-0.5 z-10 ${
+              isOutsideMonth ? "opacity-60" : ""
+            }`}
+          >
             {dayEvents
               .slice(0, dayEvents.length === 3 ? 3 : 2)
               .map((ev: CalendarEvent, i: number) => (
                 <div
-                  key={i}
+                  key={`${dateKey}-${i}`}
                   className={`
                 h-[30%] text-[15px] leading-none px-1 flex items-center text-white truncate relative
                 ${ev.isStart ? "rounded-l-sm ml-0.5" : "-ml-1"} 
@@ -164,25 +156,28 @@ const Calendar = ({
           </div>
         </div>
       );
+    };
+
+    // 先頭の空欄は「先月末の日付」として表示する
+    for (let i = 0; i < startDay; i++) {
+      const offsetFromFirst = i - startDay;
+      const dateObj = new Date(year, month, 1 + offsetFromFirst);
+      days.push(renderDateCell(dateObj, true));
+      cellIndex++;
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateObj = new Date(year, month, d);
+      days.push(renderDateCell(dateObj, false));
       cellIndex++;
     }
 
     const remainingSlots = totalSlots - (startDay + daysInMonth);
+    // 末尾の空欄は「来月頭の日付」として表示する
     for (let i = 0; i < remainingSlots; i++) {
-      const isFirstRow = cellIndex < 7;
-      const isFirstCol = cellIndex % 7 === 0;
-      days.push(
-        <div
-          key={`blank-end-${i}`}
-          onClick={(e: any) => {
-            e.stopPropagation();
-            onSelectDate(null);
-          }}
-          className={`flex-1 min-w-0 min-h-0 p-0.5 relative box-border border-gray-200 dark:border-white/10 ${
-            !isFirstRow ? "border-t" : ""
-          } ${!isFirstCol ? "border-l" : ""}`}
-        />
-      );
+      const offsetFromFirst = daysInMonth + i;
+      const dateObj = new Date(year, month, 1 + offsetFromFirst);
+      days.push(renderDateCell(dateObj, true));
       cellIndex++;
     }
 
