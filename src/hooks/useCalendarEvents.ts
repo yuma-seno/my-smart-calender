@@ -62,7 +62,7 @@ export const useCalendarEvents = (
 
     fetchEvents();
     const unsubscribe = subscribePeriodic(
-      5,
+      10,
       () => {
         fetchEvents();
       },

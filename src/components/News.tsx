@@ -144,7 +144,7 @@ const News = ({ rssUrl, resetToken }: NewsProps) => {
 
     fetchNews();
     const unsubscribe = subscribePeriodic(
-      5,
+      30,
       () => {
         fetchNews();
       },

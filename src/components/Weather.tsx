@@ -77,7 +77,7 @@ const Weather = ({ city, resetToken, dateChangeToken }: WeatherProps) => {
     };
     fetchWeather();
     const unsubscribe = subscribePeriodic(
-      10,
+      30,
       () => {
         fetchWeather();
       },
