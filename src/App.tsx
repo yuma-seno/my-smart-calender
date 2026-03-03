@@ -128,18 +128,30 @@ const App: React.FC = () => {
     // Use capture-phase listeners at the document level so that Swiper and
     // other components that call stopPropagation() cannot prevent the
     // inactivity timer from being reset on every user interaction.
-    document.addEventListener("pointerdown", registerInteraction, true);
-    document.addEventListener("keydown", registerInteraction, true);
-    document.addEventListener("wheel", registerInteraction, true);
-    document.addEventListener("touchstart", registerInteraction, true);
+    document.addEventListener("pointerdown", registerInteraction, { capture: true });
+    document.addEventListener("keydown", registerInteraction, { capture: true });
+    document.addEventListener("wheel", registerInteraction, {
+      capture: true,
+      passive: true,
+    });
+    document.addEventListener("touchstart", registerInteraction, {
+      capture: true,
+      passive: true,
+    });
     return () => {
       if (inactivityTimerRef.current) {
         window.clearTimeout(inactivityTimerRef.current);
       }
-      document.removeEventListener("pointerdown", registerInteraction, true);
-      document.removeEventListener("keydown", registerInteraction, true);
-      document.removeEventListener("wheel", registerInteraction, true);
-      document.removeEventListener("touchstart", registerInteraction, true);
+      document.removeEventListener("pointerdown", registerInteraction, { capture: true });
+      document.removeEventListener("keydown", registerInteraction, { capture: true });
+      document.removeEventListener("wheel", registerInteraction, {
+        capture: true,
+        passive: true,
+      });
+      document.removeEventListener("touchstart", registerInteraction, {
+        capture: true,
+        passive: true,
+      });
     };
   }, [registerInteraction]);
 
